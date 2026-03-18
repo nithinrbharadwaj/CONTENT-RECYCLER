@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  content-recycler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: content-recycler:latest
+    container_name: content-recycler-app
+    ports:
+      - "8501:8501"
+    volumes:
+      # Persist dataset and vector DB between container restarts
+      - ./data:/app/data
+      - ./vector_db:/app/vector_db
+      # Persist evaluation logs
+      - ./eval_scores.jsonl:/app/eval_scores.jsonl
+    env_file:
+      - .env
+    environment:
+      - CHROMA_PERSIST_DIR=/app/vector_db
+      - DATA_PATH=/app/data/old_posts.csv
+      - EVAL_LOG_FILE=/app/eval_scores.jsonl
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: run CLI ingestion as a one-shot init container
+  ingest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: content-recycler:latest
+    container_name: content-recycler-ingest
+    volumes:
+      - ./data:/app/data
+      - ./vector_db:/app/vector_db
+    env_file:
+      - .env
+    environment:
+      - CHROMA_PERSIST_DIR=/app/vector_db
+      - DATA_PATH=/app/data/old_posts.csv
+    command: ["python", "app.py", "--ingest"]
+    profiles:
+      - ingest   # Run with: docker-compose --profile ingest up ingest

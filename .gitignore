@@ -1,0 +1,57 @@
+# ============================================================
+# Content Recycler — .gitignore
+# ============================================================
+
+# --- Secrets (NEVER commit) ---------------------------------
+.env
+
+# --- Vector DB (auto-generated, can be large) ---------------
+vector_db/
+chroma/
+
+# --- Python -------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.cover
+coverage.xml
+
+# --- Virtual environments -----------------------------------
+venv/
+.venv/
+env/
+ENV/
+
+# --- OS files -----------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE / editor -------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# --- Notebooks (optional) -----------------------------------
+.ipynb_checkpoints/
+
+# --- Logs ---------------------------------------------------
+*.log
+eval_scores.jsonl
+
+# --- Docker -------------------------------------------------
+*.dockerignore

@@ -29,7 +29,7 @@ LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "openai").lower()
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
 OPENAI_MODEL: str = "gpt-4o-mini"
-GEMINI_MODEL: str = "gemini-2.0-flash"
+GEMINI_MODEL: str = "gemini-1.5-flash-8b"
 
 # ---------------------------------------------------------------------------
 # Prompt template

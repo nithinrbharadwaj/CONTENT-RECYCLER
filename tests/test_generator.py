@@ -14,7 +14,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Mock helpers
 # ---------------------------------------------------------------------------
@@ -42,6 +41,7 @@ def _make_openai_mock(text: str = MOCK_RECYCLED_TEXT) -> MagicMock:
 # Unit tests — generator.py
 # ---------------------------------------------------------------------------
 
+
 class TestRecyclePost:
     @patch("src.generator.OpenAI", return_value=_make_openai_mock())
     def test_returns_dict_with_required_keys(self, mock_openai: MagicMock) -> None:
@@ -54,7 +54,13 @@ class TestRecyclePost:
             target_platform="Twitter",
             provider="openai",
         )
-        required = {"recycled_text", "original_text", "source_platform", "target_platform", "usage"}
+        required = {
+            "recycled_text",
+            "original_text",
+            "source_platform",
+            "target_platform",
+            "usage",
+        }
         assert required.issubset(result.keys())
 
     @patch("src.generator.OpenAI", return_value=_make_openai_mock())
@@ -102,6 +108,7 @@ class TestRecyclePost:
     def test_missing_openai_key_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "")
         import importlib, src.generator as gen_mod
+
         importlib.reload(gen_mod)
 
         with pytest.raises(EnvironmentError, match="OPENAI_API_KEY"):
@@ -111,6 +118,7 @@ class TestRecyclePost:
 # ---------------------------------------------------------------------------
 # Integration test — full pipeline (mocked LLM)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def pipeline_db(tmp_path_factory: pytest.TempPathFactory) -> str:
@@ -135,20 +143,25 @@ def pipeline_db(tmp_path_factory: pytest.TempPathFactory) -> str:
     pd.DataFrame(data).to_csv(csv_path, index=False)
 
     from src.ingestion import ingest
+
     ingest(data_path=str(csv_path), persist_dir=db_path)
     return db_path
 
 
 class TestFullPipeline:
     @patch("src.generator.OpenAI", return_value=_make_openai_mock())
-    def test_pipeline_runs_end_to_end(self, mock_openai: MagicMock, pipeline_db: str) -> None:
+    def test_pipeline_runs_end_to_end(
+        self, mock_openai: MagicMock, pipeline_db: str
+    ) -> None:
         """Retrieve → generate → evaluate without errors."""
         from src.retrieval import retrieve_posts
         from src.generator import recycle_post
         from src.eval import evaluate
 
         # Step 1: Retrieve
-        results = retrieve_posts(query="AI in the workplace", top_n=1, persist_dir=pipeline_db)
+        results = retrieve_posts(
+            query="AI in the workplace", top_n=1, persist_dir=pipeline_db
+        )
         assert len(results) >= 1
         top = results[0]
 
@@ -171,7 +184,9 @@ class TestFullPipeline:
         assert 0.0 <= report["bleu_score"] <= 1.0
 
     @patch("src.generator.OpenAI", return_value=_make_openai_mock())
-    def test_pipeline_with_platform_filter(self, mock_openai: MagicMock, pipeline_db: str) -> None:
+    def test_pipeline_with_platform_filter(
+        self, mock_openai: MagicMock, pipeline_db: str
+    ) -> None:
         from src.retrieval import retrieve_posts
         from src.generator import recycle_post
 

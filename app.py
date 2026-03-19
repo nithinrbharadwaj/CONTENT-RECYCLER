@@ -19,8 +19,6 @@ import argparse
 import logging
 import os
 import sys
-from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -39,8 +37,10 @@ log = logging.getLogger(__name__)
 # CLI helpers
 # ---------------------------------------------------------------------------
 
+
 def cli_ingest(args: argparse.Namespace) -> None:
     from src.ingestion import ingest
+
     count = ingest(
         data_path=args.data,
         persist_dir=args.db,
@@ -141,6 +141,7 @@ def cli_stats(args: argparse.Namespace) -> None:
 # Streamlit UI
 # ---------------------------------------------------------------------------
 
+
 def streamlit_app() -> None:
     try:
         import streamlit as st
@@ -155,7 +156,9 @@ def streamlit_app() -> None:
     )
 
     st.title("🔁 Content Recycler")
-    st.caption("AI-powered tool to revive and repurpose old social media posts using RAG.")
+    st.caption(
+        "AI-powered tool to revive and repurpose old social media posts using RAG."
+    )
 
     # Sidebar
     with st.sidebar:
@@ -177,6 +180,7 @@ def streamlit_app() -> None:
         st.divider()
         if st.button("🗄️ Re-index database", use_container_width=True):
             from src.ingestion import ingest
+
             with st.spinner("Ingesting…"):
                 count = ingest(data_path=data_path, persist_dir=db_path)
             st.success(f"✅ {count} chunks indexed!")
@@ -186,12 +190,16 @@ def streamlit_app() -> None:
 
     with col1:
         st.subheader("🔍 Search & Retrieve")
-        query = st.text_input("Enter topic or keyword", placeholder="e.g. AI productivity tips")
+        query = st.text_input(
+            "Enter topic or keyword", placeholder="e.g. AI productivity tips"
+        )
 
         if st.button("🔍 Search", use_container_width=True) and query:
             from src.retrieval import retrieve_posts
 
-            plat_filter = None if source_platform_filter == "(any)" else source_platform_filter
+            plat_filter = (
+                None if source_platform_filter == "(any)" else source_platform_filter
+            )
             with st.spinner("Searching vector DB…"):
                 results = retrieve_posts(
                     query=query,
@@ -210,7 +218,9 @@ def streamlit_app() -> None:
                         f"[{i+1}] {post['platform']} | Score: {post['similarity_score']:.3f} | Engagement: {post['engagement_score']}"
                     ):
                         st.write(post["original_text"])
-                        st.caption(f"Date: {post['date_posted']}  |  Tone: {post['tone']}  |  Tags: {post['tags']}")
+                        st.caption(
+                            f"Date: {post['date_posted']}  |  Tone: {post['tone']}  |  Tags: {post['tags']}"
+                        )
             else:
                 st.warning("No results found. Have you indexed the database?")
 
@@ -226,7 +236,12 @@ def streamlit_app() -> None:
             )
             selected = results[selected_idx]
 
-            st.text_area("Original text (editable)", value=selected["original_text"], key="edit_original", height=120)
+            st.text_area(
+                "Original text (editable)",
+                value=selected["original_text"],
+                key="edit_original",
+                height=120,
+            )
 
             if st.button("🚀 Recycle!", use_container_width=True):
                 from src.generator import recycle_post
@@ -251,7 +266,9 @@ def streamlit_app() -> None:
                 result = st.session_state["last_result"]
                 original = st.session_state["last_original"]
 
-                st.text_area("♻️ Recycled Post", value=result["recycled_text"], height=150)
+                st.text_area(
+                    "♻️ Recycled Post", value=result["recycled_text"], height=150
+                )
 
                 usage = result.get("usage", {})
                 if usage:
@@ -263,6 +280,7 @@ def streamlit_app() -> None:
 
                 if show_eval:
                     from src.eval import evaluate, print_report
+
                     report = evaluate(
                         original=original,
                         recycled=result["recycled_text"],
@@ -286,9 +304,11 @@ def streamlit_app() -> None:
     st.divider()
     with st.expander("📈 Evaluation History"):
         from src.eval import load_eval_log
+
         records = load_eval_log()
         if records:
             import pandas as pd
+
             df = pd.DataFrame(
                 [
                     {
@@ -310,23 +330,46 @@ def streamlit_app() -> None:
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="content-recycler",
         description="AI Content Recycler — RAG-Driven Social Media Automation",
     )
-    parser.add_argument("--ingest", action="store_true", help="Ingest/index the dataset")
-    parser.add_argument("--reset", action="store_true", help="Wipe DB before re-ingesting")
-    parser.add_argument("--recycle", metavar="QUERY", help="Recycle a post matching QUERY")
-    parser.add_argument("--platform", metavar="PLATFORM", help="Target platform (default: LinkedIn)")
-    parser.add_argument("--source-platform", dest="source_platform", default=None,
-                        help="Filter source posts by platform")
-    parser.add_argument("--evaluate", action="store_true", help="Show BLEU evaluation after recycling")
-    parser.add_argument("--stats", action="store_true", help="Show evaluation statistics")
-    parser.add_argument("--data", default=os.getenv("DATA_PATH", "./data/old_posts.csv"),
-                        help="Path to dataset CSV")
-    parser.add_argument("--db", default=os.getenv("CHROMA_PERSIST_DIR", "./vector_db"),
-                        help="ChromaDB persist directory")
+    parser.add_argument(
+        "--ingest", action="store_true", help="Ingest/index the dataset"
+    )
+    parser.add_argument(
+        "--reset", action="store_true", help="Wipe DB before re-ingesting"
+    )
+    parser.add_argument(
+        "--recycle", metavar="QUERY", help="Recycle a post matching QUERY"
+    )
+    parser.add_argument(
+        "--platform", metavar="PLATFORM", help="Target platform (default: LinkedIn)"
+    )
+    parser.add_argument(
+        "--source-platform",
+        dest="source_platform",
+        default=None,
+        help="Filter source posts by platform",
+    )
+    parser.add_argument(
+        "--evaluate", action="store_true", help="Show BLEU evaluation after recycling"
+    )
+    parser.add_argument(
+        "--stats", action="store_true", help="Show evaluation statistics"
+    )
+    parser.add_argument(
+        "--data",
+        default=os.getenv("DATA_PATH", "./data/old_posts.csv"),
+        help="Path to dataset CSV",
+    )
+    parser.add_argument(
+        "--db",
+        default=os.getenv("CHROMA_PERSIST_DIR", "./vector_db"),
+        help="ChromaDB persist directory",
+    )
     return parser
 
 
@@ -336,6 +379,7 @@ if __name__ == "__main__":
         streamlit_app()
     else:
         import streamlit.web.bootstrap as _st_bootstrap  # noqa
+
         # If called as `streamlit run app.py`, Streamlit will re-import __main__
         # and the check above will catch it. For plain `python app.py` fall through:
         parser = _build_parser()

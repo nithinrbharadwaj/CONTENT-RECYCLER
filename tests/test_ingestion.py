@@ -17,6 +17,7 @@ import pytest
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def sample_csv(tmp_path: Path) -> str:
     """Create a minimal CSV dataset for testing."""
@@ -47,6 +48,7 @@ def vector_db_dir(tmp_path: Path) -> str:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestLoadPosts:
     def test_loads_correctly(self, sample_csv: str) -> None:
@@ -118,7 +120,9 @@ class TestIngest:
         count = ingest(data_path=sample_csv, persist_dir=vector_db_dir)
         assert count > 0
 
-    def test_reset_clears_and_repopulates(self, sample_csv: str, vector_db_dir: str) -> None:
+    def test_reset_clears_and_repopulates(
+        self, sample_csv: str, vector_db_dir: str
+    ) -> None:
         from src.ingestion import ingest
 
         count1 = ingest(data_path=sample_csv, persist_dir=vector_db_dir)
@@ -126,7 +130,9 @@ class TestIngest:
         # After reset + re-ingest, should have same number of chunks
         assert count1 == count2
 
-    def test_double_ingest_no_duplicate(self, sample_csv: str, vector_db_dir: str) -> None:
+    def test_double_ingest_no_duplicate(
+        self, sample_csv: str, vector_db_dir: str
+    ) -> None:
         from src.ingestion import ingest
 
         count1 = ingest(data_path=sample_csv, persist_dir=vector_db_dir)

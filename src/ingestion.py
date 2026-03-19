@@ -14,13 +14,11 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import uuid
 from pathlib import Path
 from typing import List, Dict, Any
 
 import pandas as pd
 import chromadb
-from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 
@@ -47,6 +45,7 @@ log = logging.getLogger(__name__)
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def load_posts(data_path: str = DATA_PATH) -> pd.DataFrame:
     """Load CSV and return a cleaned DataFrame."""
     path = Path(data_path)
@@ -54,7 +53,13 @@ def load_posts(data_path: str = DATA_PATH) -> pd.DataFrame:
         raise FileNotFoundError(f"Dataset not found: {path.resolve()}")
 
     df = pd.read_csv(path)
-    required = {"post_id", "platform", "original_text", "engagement_score", "date_posted"}
+    required = {
+        "post_id",
+        "platform",
+        "original_text",
+        "engagement_score",
+        "date_posted",
+    }
     missing = required - set(df.columns)
     if missing:
         raise ValueError(f"CSV is missing columns: {missing}")
@@ -129,7 +134,9 @@ def ingest(
     client = chromadb.PersistentClient(path=persist_dir)
 
     if reset:
-        log.warning("--reset flag set: deleting existing collection '%s'", COLLECTION_NAME)
+        log.warning(
+            "--reset flag set: deleting existing collection '%s'", COLLECTION_NAME
+        )
         try:
             client.delete_collection(COLLECTION_NAME)
         except Exception:
@@ -182,7 +189,11 @@ def ingest(
         log.info("Upserted chunk batch %d–%d", start, min(end, len(ids)))
 
     total = collection.count()
-    log.info("Ingestion complete. Collection '%s' now contains %d documents.", COLLECTION_NAME, total)
+    log.info(
+        "Ingestion complete. Collection '%s' now contains %d documents.",
+        COLLECTION_NAME,
+        total,
+    )
     return total
 
 
@@ -190,11 +201,16 @@ def ingest(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Ingest social posts into ChromaDB.")
     parser.add_argument("--data", default=DATA_PATH, help="Path to old_posts.csv")
-    parser.add_argument("--db", default=CHROMA_PERSIST_DIR, help="ChromaDB persist directory")
-    parser.add_argument("--reset", action="store_true", help="Wipe DB before re-indexing")
+    parser.add_argument(
+        "--db", default=CHROMA_PERSIST_DIR, help="ChromaDB persist directory"
+    )
+    parser.add_argument(
+        "--reset", action="store_true", help="Wipe DB before re-indexing"
+    )
     return parser.parse_args()
 
 

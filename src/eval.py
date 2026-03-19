@@ -22,9 +22,9 @@ log = logging.getLogger(__name__)
 # Scoring thresholds (from project spec)
 # ---------------------------------------------------------------------------
 BLEU_RANGES = [
-    (0.0,  0.2,  "⚠️  Too different — core message may be lost"),
-    (0.2,  0.5,  "✅  Ideal range — fresh but faithful to original"),
-    (0.5,  1.01, "🔁  Too similar — not enough creative reworking"),
+    (0.0, 0.2, "⚠️  Too different — core message may be lost"),
+    (0.2, 0.5, "✅  Ideal range — fresh but faithful to original"),
+    (0.5, 1.01, "🔁  Too similar — not enough creative reworking"),
 ]
 
 LOG_FILE: str = os.getenv("EVAL_LOG_FILE", "./eval_scores.jsonl")
@@ -33,6 +33,7 @@ LOG_FILE: str = os.getenv("EVAL_LOG_FILE", "./eval_scores.jsonl")
 # ---------------------------------------------------------------------------
 # Core metric
 # ---------------------------------------------------------------------------
+
 
 def calculate_bleu(original: str, recycled: str) -> float:
     """
@@ -88,6 +89,7 @@ def interpret_bleu(score: float) -> str:
 # ---------------------------------------------------------------------------
 # Evaluation report
 # ---------------------------------------------------------------------------
+
 
 def evaluate(
     original: str,
@@ -171,11 +173,17 @@ def print_report(report: Dict[str, Any]) -> None:
     print(f"  Progress    : [{bar}]  {score:.1%}")
     print(f"  Assessment  : {interp}")
     print("-" * 70)
-    print(f"  Original    : {report['original'][:120]}{'…' if len(report['original'])>120 else ''}")
-    print(f"  Recycled    : {report['recycled'][:120]}{'…' if len(report['recycled'])>120 else ''}")
+    print(
+        f"  Original    : {report['original'][:120]}{'…' if len(report['original'])>120 else ''}"
+    )
+    print(
+        f"  Recycled    : {report['recycled'][:120]}{'…' if len(report['recycled'])>120 else ''}"
+    )
     if report.get("metadata"):
         meta = report["metadata"]
-        print(f"  Platform    : {meta.get('source_platform','')} → {meta.get('target_platform','')}")
+        print(
+            f"  Platform    : {meta.get('source_platform','')} → {meta.get('target_platform','')}"
+        )
     print("=" * 70 + "\n")
 
 
@@ -186,10 +194,14 @@ def print_report(report: Dict[str, Any]) -> None:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Evaluate BLEU score between two texts.")
+    parser = argparse.ArgumentParser(
+        description="Evaluate BLEU score between two texts."
+    )
     parser.add_argument("original", help="Original post text")
     parser.add_argument("recycled", help="Recycled/generated post text")
-    parser.add_argument("--no-log", action="store_true", help="Do not write to log file")
+    parser.add_argument(
+        "--no-log", action="store_true", help="Do not write to log file"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.WARNING)

@@ -74,12 +74,15 @@ def _build_prompt(
 # Provider: OpenAI
 # ---------------------------------------------------------------------------
 
+
 def _generate_openai(prompt: str) -> Tuple[str, Dict[str, int]]:
     """Call OpenAI chat completion and return (text, usage_dict)."""
     try:
         from openai import OpenAI
     except ImportError as e:
-        raise ImportError("openai package not installed. Run: pip install openai") from e
+        raise ImportError(
+            "openai package not installed. Run: pip install openai"
+        ) from e
 
     if not OPENAI_API_KEY:
         raise EnvironmentError("OPENAI_API_KEY is not set in environment / .env file.")
@@ -109,6 +112,7 @@ def _generate_openai(prompt: str) -> Tuple[str, Dict[str, int]]:
 # ---------------------------------------------------------------------------
 # Provider: Gemini
 # ---------------------------------------------------------------------------
+
 
 def _generate_gemini(prompt: str) -> Tuple[str, Dict[str, int]]:
     """Call Google Gemini and return (text, usage_dict)."""
@@ -146,6 +150,7 @@ def _generate_gemini(prompt: str) -> Tuple[str, Dict[str, int]]:
 # Provider: Groq
 # ---------------------------------------------------------------------------
 
+
 def _generate_groq(prompt: str) -> Tuple[str, Dict[str, int]]:
     """Call Groq and return (text, usage_dict)."""
     try:
@@ -181,6 +186,7 @@ def _generate_groq(prompt: str) -> Tuple[str, Dict[str, int]]:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def recycle_post(
     original_text: str,
@@ -230,7 +236,9 @@ def recycle_post(
     elif prov == "groq":
         recycled_text, usage = _generate_groq(prompt)
     else:
-        raise ValueError(f"Unsupported LLM_PROVIDER: '{prov}'. Use 'openai', 'gemini', or 'groq'.")
+        raise ValueError(
+            f"Unsupported LLM_PROVIDER: '{prov}'. Use 'openai', 'gemini', or 'groq'."
+        )
 
     return {
         "recycled_text": recycled_text,

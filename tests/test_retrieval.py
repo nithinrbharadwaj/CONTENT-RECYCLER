@@ -11,10 +11,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fixtures — shared DB setup
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def populated_db(tmp_path_factory: pytest.TempPathFactory):
@@ -44,6 +44,7 @@ def populated_db(tmp_path_factory: pytest.TempPathFactory):
     pd.DataFrame(data).to_csv(csv_path, index=False)
 
     from src.ingestion import ingest
+
     ingest(data_path=str(csv_path), persist_dir=db_path)
 
     return db_path
@@ -53,11 +54,14 @@ def populated_db(tmp_path_factory: pytest.TempPathFactory):
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestRetrievePosts:
     def test_returns_results(self, populated_db: str) -> None:
         from src.retrieval import retrieve_posts
 
-        results = retrieve_posts(query="python automation", top_n=3, persist_dir=populated_db)
+        results = retrieve_posts(
+            query="python automation", top_n=3, persist_dir=populated_db
+        )
         assert len(results) > 0
 
     def test_result_has_required_keys(self, populated_db: str) -> None:
@@ -65,16 +69,27 @@ class TestRetrievePosts:
 
         results = retrieve_posts(query="AI trends", top_n=1, persist_dir=populated_db)
         assert len(results) >= 1
-        keys = {"id", "original_text", "platform", "engagement_score", "date_posted", "similarity_score"}
+        keys = {
+            "id",
+            "original_text",
+            "platform",
+            "engagement_score",
+            "date_posted",
+            "similarity_score",
+        }
         assert keys.issubset(results[0].keys())
 
     def test_most_relevant_post_returned(self, populated_db: str) -> None:
         from src.retrieval import retrieve_posts
 
-        results = retrieve_posts(query="machine learning evaluation", top_n=3, persist_dir=populated_db)
+        results = retrieve_posts(
+            query="machine learning evaluation", top_n=3, persist_dir=populated_db
+        )
         # Top result should be semantically close to ML/evaluation topic
         top_text = results[0]["original_text"].lower()
-        assert any(kw in top_text for kw in ["machine", "learning", "model", "evaluation"])
+        assert any(
+            kw in top_text for kw in ["machine", "learning", "model", "evaluation"]
+        )
 
     def test_top_n_respected(self, populated_db: str) -> None:
         from src.retrieval import retrieve_posts
@@ -85,7 +100,9 @@ class TestRetrievePosts:
     def test_similarity_scores_in_range(self, populated_db: str) -> None:
         from src.retrieval import retrieve_posts
 
-        results = retrieve_posts(query="startup marketing", top_n=3, persist_dir=populated_db)
+        results = retrieve_posts(
+            query="startup marketing", top_n=3, persist_dir=populated_db
+        )
         for r in results:
             assert -0.1 <= r["similarity_score"] <= 1.1  # small float tolerance
 

@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 import chromadb
@@ -53,6 +52,7 @@ def _get_collection(persist_dir: str = CHROMA_PERSIST_DIR) -> chromadb.Collectio
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def retrieve_posts(
     query: str,
@@ -133,10 +133,14 @@ def print_results(results: List[Dict[str, Any]]) -> None:
     print(f"  TOP {len(results)} RESULTS")
     print(f"{'='*70}")
     for i, post in enumerate(results, 1):
-        print(f"\n[{i}] Platform: {post['platform']}  |  Engagement: {post['engagement_score']}"
-              f"  |  Date: {post['date_posted']}  |  Similarity: {post['similarity_score']:.4f}")
+        print(
+            f"\n[{i}] Platform: {post['platform']}  |  Engagement: {post['engagement_score']}"
+            f"  |  Date: {post['date_posted']}  |  Similarity: {post['similarity_score']:.4f}"
+        )
         print(f"    Tone: {post['tone']}  |  Tags: {post['tags']}")
-        print(f"    Text: {post['original_text'][:200]}{'…' if len(post['original_text']) > 200 else ''}")
+        print(
+            f"    Text: {post['original_text'][:200]}{'…' if len(post['original_text']) > 200 else ''}"
+        )
     print(f"\n{'='*70}\n")
 
 
@@ -144,12 +148,19 @@ def print_results(results: List[Dict[str, Any]]) -> None:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Retrieve semantically similar posts.")
     parser.add_argument("query", help="Natural language search query")
-    parser.add_argument("--top", type=int, default=3, help="Number of results (default: 3)")
-    parser.add_argument("--platform", default=None, help="Filter by platform, e.g. LinkedIn")
-    parser.add_argument("--db", default=CHROMA_PERSIST_DIR, help="ChromaDB persist directory")
+    parser.add_argument(
+        "--top", type=int, default=3, help="Number of results (default: 3)"
+    )
+    parser.add_argument(
+        "--platform", default=None, help="Filter by platform, e.g. LinkedIn"
+    )
+    parser.add_argument(
+        "--db", default=CHROMA_PERSIST_DIR, help="ChromaDB persist directory"
+    )
     return parser.parse_args()
 
 

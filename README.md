@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Content Recycler 🔁
 
 > AI-powered tool to revive and repurpose old social media posts using RAG (Retrieval-Augmented Generation).
@@ -289,3 +290,7 @@ docs: complete README with architecture and usage guide
 ## License
 
 MIT — see `LICENSE` for details.
+=======
+# CONTENT-RECYCLER
+Content Recycler — AI-Powered Social Media Post Repurposing. An AI-driven tool that retrieves old social media posts using semantic search, reworks the content using a large language model, and reposts it strategically to extend its lifespan and boost engagement across platforms.
+>>>>>>> 37156cae60d109f60e4c67d64e324a2ecc8d1d57

@@ -1,12 +1,13 @@
 """
 generator.py
 ============
-Uses an LLM (OpenAI gpt-4o-mini or Google Gemini) to rewrite/recycle a
+Uses an LLM (OpenAI gpt-4o-mini, Google Gemini, or Groq) to rewrite/recycle a
 social media post for a new target platform.
 
 Supported providers (set via LLM_PROVIDER env var):
     "openai"  → uses OPENAI_API_KEY  (default)
     "gemini"  → uses GOOGLE_API_KEY
+    "groq"    → uses GROQ_API_KEY
 """
 
 from __future__ import annotations
@@ -28,8 +29,10 @@ log = logging.getLogger(__name__)
 LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "openai").lower()
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 OPENAI_MODEL: str = "gpt-4o-mini"
 GEMINI_MODEL: str = "gemini-2.0-flash-lite"
+GROQ_MODEL: str = "llama-3.1-8b-instant"
 
 # ---------------------------------------------------------------------------
 # Prompt template
@@ -140,6 +143,42 @@ def _generate_gemini(prompt: str) -> Tuple[str, Dict[str, int]]:
 
 
 # ---------------------------------------------------------------------------
+# Provider: Groq
+# ---------------------------------------------------------------------------
+
+def _generate_groq(prompt: str) -> Tuple[str, Dict[str, int]]:
+    """Call Groq and return (text, usage_dict)."""
+    try:
+        from groq import Groq
+    except ImportError as e:
+        raise ImportError("groq package not installed. Run: pip install groq") from e
+
+    if not GROQ_API_KEY:
+        raise EnvironmentError("GROQ_API_KEY is not set in environment / .env file.")
+
+    client = Groq(api_key=GROQ_API_KEY)
+    t0 = time.perf_counter()
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.8,
+        max_tokens=512,
+    )
+    elapsed = time.perf_counter() - t0
+
+    text = response.choices[0].message.content.strip()
+    usage = {
+        "prompt_tokens": response.usage.prompt_tokens,
+        "completion_tokens": response.usage.completion_tokens,
+        "total_tokens": response.usage.total_tokens,
+        "latency_s": round(elapsed, 2),
+        "model": GROQ_MODEL,
+    }
+    log.info("Groq usage: %s", usage)
+    return text, usage
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -161,7 +200,7 @@ def recycle_post(
     original_date    : Date string of original post (e.g., "2022-03-10")
     target_platform  : Desired target platform (e.g., "Twitter")
     target_year      : Year to write for (defaults to current year)
-    provider         : "openai" or "gemini" (defaults to LLM_PROVIDER env var)
+    provider         : "openai", "gemini", or "groq" (defaults to LLM_PROVIDER env var)
 
     Returns
     -------
@@ -188,8 +227,10 @@ def recycle_post(
         recycled_text, usage = _generate_openai(prompt)
     elif prov == "gemini":
         recycled_text, usage = _generate_gemini(prompt)
+    elif prov == "groq":
+        recycled_text, usage = _generate_groq(prompt)
     else:
-        raise ValueError(f"Unsupported LLM_PROVIDER: '{prov}'. Use 'openai' or 'gemini'.")
+        raise ValueError(f"Unsupported LLM_PROVIDER: '{prov}'. Use 'openai', 'gemini', or 'groq'.")
 
     return {
         "recycled_text": recycled_text,

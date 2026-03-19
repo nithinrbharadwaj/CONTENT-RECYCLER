@@ -278,7 +278,6 @@ def streamlit_app() -> None:
                     )
 
                 if show_eval:
-                    from src.eval import evaluate, print_report
 
                     report = evaluate(
                         original=original,

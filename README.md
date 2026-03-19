@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Content Recycler 🔁
 
 > AI-powered tool to revive and repurpose old social media posts using RAG (Retrieval-Augmented Generation).
@@ -14,10 +13,10 @@
 │  ┌──────────┐    ┌───────────┐    ┌──────────────────┐  │
 │  │  DATA    │───▶│  VECTOR   │───▶│   LLM GENERATOR  │  │
 │  │  LAYER   │    │  LAYER    │    │   (Rework Post)  │  │
-│  │ CSV/JSON │    │ ChromaDB  │    │ GPT-4o / Gemini  │  │
-│  └──────────┘    └───────────┘    └──────────────────┘  │
-│       │               │                    │            │
-│       ▼               ▼                    ▼            │
+│  │ CSV/JSON │    │ ChromaDB  │    │ Groq / OpenAI /  │  │
+│  └──────────┘    └───────────┘    │ Gemini           │  │
+│       │               │           └──────────────────┘  │
+│       ▼               ▼                    │            │
 │  ┌──────────┐    ┌───────────┐    ┌──────────────────┐  │
 │  │  Pandas  │    │Embeddings │    │  BLEU EVALUATOR  │  │
 │  │DataFrame │    │(MiniLM-L6)│    │  (eval.py)       │  │
@@ -92,7 +91,7 @@ content-recycler/
 | Language | Python 3.10+ | Modern, async-ready |
 | Vector DB | ChromaDB | Lightweight, persistent, local |
 | Embeddings | `all-MiniLM-L6-v2` | Free, no API key needed |
-| LLM | `gpt-4o-mini` or `gemini-1.5-flash` | Cost-efficient, fast |
+| LLM | Groq (LLaMA 3.1) / OpenAI / Gemini | Cost-efficient, fast |
 | Evaluation | `sacrebleu` + `nltk` | Industry-standard BLEU scoring |
 | UI | Streamlit | Fast prototype UI |
 | Containerization | Docker + Docker Compose | Reproducible deployment |
@@ -118,7 +117,7 @@ pip install -r requirements.txt
 
 # 4. Configure API keys
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY or GOOGLE_API_KEY
+# Edit .env and add your GROQ_API_KEY (or OPENAI_API_KEY / GOOGLE_API_KEY)
 
 # 5. Index the dataset
 python app.py --ingest
@@ -184,7 +183,7 @@ The dataset (`data/old_posts.csv`) is loaded with Pandas. Long posts are chunked
 A natural language query (e.g. `"remote work tips"`) is embedded using the same model. ChromaDB performs approximate nearest-neighbour search using cosine similarity. Results are returned with metadata and similarity scores. An optional platform filter narrows results to specific platforms.
 
 ### 3. Generation (`src/generator.py`)
-The top retrieved post is passed into a structured prompt template that instructs the LLM to rewrite the content for a new platform (e.g. LinkedIn → Twitter), update any outdated references, and optimise for the target platform's best practices. Supports OpenAI (`gpt-4o-mini`) and Google Gemini (`gemini-1.5-flash`).
+The top retrieved post is passed into a structured prompt template that instructs the LLM to rewrite the content for a new platform (e.g. LinkedIn → Twitter), update any outdated references, and optimise for the target platform's best practices. Supports Groq (LLaMA 3.1), OpenAI (`gpt-4o-mini`), and Google Gemini (`gemini-2.0-flash-lite`).
 
 ### 4. Evaluation (`src/eval.py`)
 BLEU score is computed between the original and recycled texts using `sacrebleu` (with an `nltk` fallback). Each evaluation result is appended to `eval_scores.jsonl` for tracking over time.
@@ -193,15 +192,15 @@ BLEU score is computed between the original and recycled texts using `sacrebleu`
 
 ## Example Output
 
-**Query:** `"AI is changing the way we work"`
+**Query:** `"AI productivity"`
 
-**Original post (LinkedIn, 2022):**
-> Machine learning is transforming industries. If you're not thinking about how AI will affect your role in the next 5 years, now is the time to start. Upskilling is no longer optional — it's survival. #MachineLearning #FutureOfWork
+**Original post (Facebook, 2023):**
+> Attending a virtual conference on AI.
 
-**Recycled for Twitter (2026):**
-> AI isn't coming for your job — it's coming for your excuses. In 2026, the gap between those who embrace AI tools and those who don't is growing fast. Start today, not tomorrow. #AISkills #FutureOfWork #StayAhead
+**Recycled for LinkedIn (2026):**
+> Advancing my knowledge on the latest AI innovations and trends at a leading industry summit. Excited to connect with experts and learn how AI can drive business growth and transformation. #AI #DigitalTransformation #LeadershipDevelopment
 
-**BLEU Score:** `0.28` ✅ Ideal range — fresh but faithful to original
+**BLEU Score:** `0.013` — Creative recycling confirmed (low overlap = fresh content)
 
 ---
 
@@ -209,11 +208,9 @@ BLEU score is computed between the original and recycled texts using `sacrebleu`
 
 | # | Original Platform | Target Platform | BLEU Score | Assessment |
 |---|---|---|---|---|
-| 1 | LinkedIn | Twitter | 0.28 | ✅ Ideal |
-| 2 | Twitter | LinkedIn | 0.31 | ✅ Ideal |
-| 3 | Instagram | LinkedIn | 0.22 | ✅ Ideal |
-| 4 | LinkedIn | Instagram | 0.19 | ⚠️ Too different |
-| 5 | Facebook | Twitter | 0.35 | ✅ Ideal |
+| 1 | Facebook | LinkedIn | 0.013 | Fresh rewrite |
+| 2 | Instagram | Twitter | 0.036 | Fresh rewrite |
+| 3 | Instagram | Instagram | 0.026 | Fresh rewrite |
 
 **BLEU Score Interpretation:**
 
@@ -260,37 +257,16 @@ pytest tests/test_retrieval.py::TestRetrievePosts -v
 
 | Variable | Default | Description |
 |---|---|---|
-| `LLM_PROVIDER` | `openai` | `openai` or `gemini` |
+| `LLM_PROVIDER` | `groq` | `openai`, `gemini`, or `groq` |
 | `OPENAI_API_KEY` | — | Required if using OpenAI |
 | `GOOGLE_API_KEY` | — | Required if using Gemini |
+| `GROQ_API_KEY` | — | Required if using Groq |
 | `CHROMA_PERSIST_DIR` | `./vector_db` | Where ChromaDB stores vectors |
 | `DATA_PATH` | `./data/old_posts.csv` | Dataset location |
 | `EVAL_LOG_FILE` | `./eval_scores.jsonl` | Evaluation log path |
 
 ---
 
-## Suggested Git Commit History
-
-```
-feat: initial project structure and .gitignore
-feat: add data ingestion pipeline with ChromaDB
-feat: implement semantic retrieval from vector DB
-feat: add LLM generator with platform-specific prompts
-feat: implement BLEU score evaluation module
-feat: build CLI app entry point with argparse
-feat: add Streamlit UI for interactive use
-test: add unit and integration tests for all modules
-chore: add Dockerfile and docker-compose for deployment
-ci: add GitHub Actions workflow for automated testing
-docs: complete README with architecture and usage guide
-```
-
----
-
 ## License
 
 MIT — see `LICENSE` for details.
-=======
-# CONTENT-RECYCLER
-Content Recycler — AI-Powered Social Media Post Repurposing. An AI-driven tool that retrieves old social media posts using semantic search, reworks the content using a large language model, and reposts it strategically to extend its lifespan and boost engagement across platforms.
->>>>>>> 37156cae60d109f60e4c67d64e324a2ecc8d1d57

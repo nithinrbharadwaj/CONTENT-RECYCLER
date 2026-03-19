@@ -245,7 +245,6 @@ def streamlit_app() -> None:
 
             if st.button("🚀 Recycle!", use_container_width=True):
                 from src.generator import recycle_post
-                from src.eval import evaluate, interpret_bleu
 
                 original = st.session_state["edit_original"]
                 with st.spinner(f"Generating via {provider}…"):

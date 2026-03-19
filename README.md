@@ -257,11 +257,7 @@ pytest tests/test_retrieval.py::TestRetrievePosts -v
 
 | Variable | Default | Description |
 |---|---|---|
-<<<<<<< HEAD
 | `LLM_PROVIDER` | `groq` | `openai`, `gemini`, or `groq` |
-=======
-| `LLM_PROVIDER` | `groq` | `openai` or `gemini` or 'groq' |
->>>>>>> 01ec542985fbadbdc6e9c0179e150f1fe71c470f
 | `OPENAI_API_KEY` | — | Required if using OpenAI |
 | `GOOGLE_API_KEY` | — | Required if using Gemini |
 | `GROQ_API_KEY` | — | Required if using Groq |
@@ -273,11 +269,4 @@ pytest tests/test_retrieval.py::TestRetrievePosts -v
 
 ## License
 
-<<<<<<< HEAD
 MIT — see `LICENSE` for details.
-=======
-MIT — see `LICENSE` for details.
-=======
-# CONTENT-RECYCLER
-Content Recycler — AI-Powered Social Media Post Repurposing. An AI-driven tool that retrieves old social media posts using semantic search, reworks the content using a large language model, and reposts it strategically to extend its lifespan and boost engagement across platforms.
->>>>>>> 01ec542985fbadbdc6e9c0179e150f1fe71c470f

@@ -71,7 +71,6 @@ def cli_recycle(args: argparse.Namespace) -> None:
 
     print_results(results)
 
-    # Use the top result
     top = results[0]
     print(f"\n🔁  Recycling top result for {target_platform}…")
 
@@ -101,7 +100,6 @@ def cli_recycle(args: argparse.Namespace) -> None:
         )
         print_report(report)
 
-    # Token usage
     usage = result.get("usage", {})
     if usage:
         print(
@@ -149,6 +147,8 @@ def streamlit_app() -> None:
         print("Streamlit not installed. Run: pip install streamlit")
         sys.exit(1)
 
+    from src.eval import evaluate, load_eval_log
+
     st.set_page_config(
         page_title="Content Recycler 🔁",
         page_icon="🔁",
@@ -160,12 +160,11 @@ def streamlit_app() -> None:
         "AI-powered tool to revive and repurpose old social media posts using RAG."
     )
 
-    # Sidebar
     with st.sidebar:
         st.header("⚙️ Settings")
         db_path = st.text_input("Vector DB path", value="./vector_db")
         data_path = st.text_input("Dataset path", value="./data/old_posts.csv")
-        provider = st.selectbox("LLM Provider", ["openai", "gemini"])
+        provider = st.selectbox("LLM Provider", ["openai", "gemini", "groq"])
         target_platform = st.selectbox(
             "Target Platform",
             ["LinkedIn", "Twitter", "Instagram", "Facebook", "Threads"],
@@ -185,7 +184,6 @@ def streamlit_app() -> None:
                 count = ingest(data_path=data_path, persist_dir=db_path)
             st.success(f"✅ {count} chunks indexed!")
 
-    # Main area
     col1, col2 = st.columns([1, 1])
 
     with col1:
@@ -272,13 +270,12 @@ def streamlit_app() -> None:
                 usage = result.get("usage", {})
                 if usage:
                     st.caption(
-                        f"Model: {usage.get('model',provider)} | "
-                        f"Tokens: {usage.get('total_tokens',0)} | "
-                        f"Latency: {usage.get('latency_s',0):.2f}s"
+                        f"Model: {usage.get('model', provider)} | "
+                        f"Tokens: {usage.get('total_tokens', 0)} | "
+                        f"Latency: {usage.get('latency_s', 0):.2f}s"
                     )
 
                 if show_eval:
-
                     report = evaluate(
                         original=original,
                         recycled=result["recycled_text"],
@@ -298,11 +295,8 @@ def streamlit_app() -> None:
         else:
             st.info("Search for posts on the left first, then recycle here.")
 
-    # Eval history tab
     st.divider()
     with st.expander("📈 Evaluation History"):
-        from src.eval import load_eval_log
-
         records = load_eval_log()
         if records:
             import pandas as pd
@@ -372,14 +366,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
-    # Detect if running via `streamlit run app.py`
     if "streamlit" in sys.modules or os.getenv("STREAMLIT_RUNTIME"):
         streamlit_app()
     else:
         import streamlit.web.bootstrap as _st_bootstrap  # noqa
 
-        # If called as `streamlit run app.py`, Streamlit will re-import __main__
-        # and the check above will catch it. For plain `python app.py` fall through:
         parser = _build_parser()
         args = parser.parse_args()
 

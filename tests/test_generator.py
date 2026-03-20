@@ -25,15 +25,20 @@ MOCK_RECYCLED_TEXT = (
 )
 
 
-def _make_openai_mock(text: str = MOCK_RECYCLED_TEXT) -> MagicMock:
-    """Return a mock that mimics the OpenAI client response."""
-    mock_client = MagicMock()
+def _make_openai_response(text: str = MOCK_RECYCLED_TEXT) -> MagicMock:
+    """Return a mock that mimics the OpenAI response object."""
     mock_response = MagicMock()
     mock_response.choices[0].message.content = text
     mock_response.usage.prompt_tokens = 120
     mock_response.usage.completion_tokens = 80
     mock_response.usage.total_tokens = 200
-    mock_client.chat.completions.create.return_value = mock_response
+    return mock_response
+
+
+def _make_openai_client(text: str = MOCK_RECYCLED_TEXT) -> MagicMock:
+    """Return a mock OpenAI client."""
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = _make_openai_response(text)
     return mock_client
 
 
@@ -43,8 +48,12 @@ def _make_openai_mock(text: str = MOCK_RECYCLED_TEXT) -> MagicMock:
 
 
 class TestRecyclePost:
-    @patch("src.generator.OpenAI", return_value=_make_openai_mock())
-    def test_returns_dict_with_required_keys(self, mock_openai: MagicMock) -> None:
+    @patch("src.generator._generate_openai")
+    def test_returns_dict_with_required_keys(self, mock_gen: MagicMock) -> None:
+        mock_gen.return_value = (MOCK_RECYCLED_TEXT, {
+            "prompt_tokens": 120, "completion_tokens": 80,
+            "total_tokens": 200, "latency_s": 0.5, "model": "gpt-4o-mini"
+        })
         from src.generator import recycle_post
 
         result = recycle_post(
@@ -63,8 +72,12 @@ class TestRecyclePost:
         }
         assert required.issubset(result.keys())
 
-    @patch("src.generator.OpenAI", return_value=_make_openai_mock())
-    def test_recycled_text_is_non_empty(self, mock_openai: MagicMock) -> None:
+    @patch("src.generator._generate_openai")
+    def test_recycled_text_is_non_empty(self, mock_gen: MagicMock) -> None:
+        mock_gen.return_value = (MOCK_RECYCLED_TEXT, {
+            "prompt_tokens": 120, "completion_tokens": 80,
+            "total_tokens": 200, "latency_s": 0.5, "model": "gpt-4o-mini"
+        })
         from src.generator import recycle_post
 
         result = recycle_post(
@@ -77,8 +90,12 @@ class TestRecyclePost:
         assert isinstance(result["recycled_text"], str)
         assert len(result["recycled_text"]) > 0
 
-    @patch("src.generator.OpenAI", return_value=_make_openai_mock())
-    def test_usage_dict_populated(self, mock_openai: MagicMock) -> None:
+    @patch("src.generator._generate_openai")
+    def test_usage_dict_populated(self, mock_gen: MagicMock) -> None:
+        mock_gen.return_value = (MOCK_RECYCLED_TEXT, {
+            "prompt_tokens": 120, "completion_tokens": 80,
+            "total_tokens": 200, "latency_s": 0.5, "model": "gpt-4o-mini"
+        })
         from src.generator import recycle_post
 
         result = recycle_post(
@@ -107,8 +124,8 @@ class TestRecyclePost:
 
     def test_missing_openai_key_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "")
-        import importlib, src.generator as gen_mod
-
+        import importlib
+        import src.generator as gen_mod
         importlib.reload(gen_mod)
 
         with pytest.raises(EnvironmentError, match="OPENAI_API_KEY"):
@@ -143,29 +160,29 @@ def pipeline_db(tmp_path_factory: pytest.TempPathFactory) -> str:
     pd.DataFrame(data).to_csv(csv_path, index=False)
 
     from src.ingestion import ingest
-
     ingest(data_path=str(csv_path), persist_dir=db_path)
     return db_path
 
 
 class TestFullPipeline:
-    @patch("src.generator.OpenAI", return_value=_make_openai_mock())
+    @patch("src.generator._generate_openai")
     def test_pipeline_runs_end_to_end(
-        self, mock_openai: MagicMock, pipeline_db: str
+        self, mock_gen: MagicMock, pipeline_db: str
     ) -> None:
-        """Retrieve → generate → evaluate without errors."""
+        mock_gen.return_value = (MOCK_RECYCLED_TEXT, {
+            "prompt_tokens": 120, "completion_tokens": 80,
+            "total_tokens": 200, "latency_s": 0.5, "model": "gpt-4o-mini"
+        })
         from src.retrieval import retrieve_posts
         from src.generator import recycle_post
         from src.eval import evaluate
 
-        # Step 1: Retrieve
         results = retrieve_posts(
             query="AI in the workplace", top_n=1, persist_dir=pipeline_db
         )
         assert len(results) >= 1
         top = results[0]
 
-        # Step 2: Generate
         result = recycle_post(
             original_text=top["original_text"],
             source_platform=top["platform"],
@@ -175,7 +192,6 @@ class TestFullPipeline:
         )
         assert result["recycled_text"]
 
-        # Step 3: Evaluate
         report = evaluate(
             original=top["original_text"],
             recycled=result["recycled_text"],
@@ -183,10 +199,14 @@ class TestFullPipeline:
         )
         assert 0.0 <= report["bleu_score"] <= 1.0
 
-    @patch("src.generator.OpenAI", return_value=_make_openai_mock())
+    @patch("src.generator._generate_openai")
     def test_pipeline_with_platform_filter(
-        self, mock_openai: MagicMock, pipeline_db: str
+        self, mock_gen: MagicMock, pipeline_db: str
     ) -> None:
+        mock_gen.return_value = (MOCK_RECYCLED_TEXT, {
+            "prompt_tokens": 120, "completion_tokens": 80,
+            "total_tokens": 200, "latency_s": 0.5, "model": "gpt-4o-mini"
+        })
         from src.retrieval import retrieve_posts
         from src.generator import recycle_post
 
@@ -196,7 +216,6 @@ class TestFullPipeline:
             platform_filter="Twitter",
             persist_dir=pipeline_db,
         )
-        # May return 0 results if only Twitter posts filtered — just ensure no crash
         if results:
             top = results[0]
             result = recycle_post(

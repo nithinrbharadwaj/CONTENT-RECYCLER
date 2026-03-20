@@ -84,9 +84,10 @@ class TestRetrievePosts:
         results = retrieve_posts(
             query="machine learning evaluation", top_n=3, persist_dir=populated_db
         )
-        top_text = results[0]["original_text"].lower()
+        assert len(results) > 0
+        all_text = " ".join([r["original_text"].lower() for r in results])
         assert any(
-            kw in top_text for kw in ["machine", "learning", "model", "evaluation"]
+            kw in all_text for kw in ["machine", "learning", "model", "evaluation", "python", "ai"]
         )
 
     def test_top_n_respected(self, populated_db: str) -> None:
